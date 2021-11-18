@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>Streamer</title>
+</head>
+<body>
+    <!-- Video element goes here. -->
+    <video autoplay></video>
+
+    <script>
+        // Get video DOM element:
+        const video = document.querySelector('video');
+        
+        // Request access to the webcam:
+        navigator.mediaDevices.getUserMedia({video: {width: 426, height: 240}}).then((stream) => video.srcObject = stream);
+        
+        // Creates a frame encoded in Base64 at some interval:
+        const getFrame = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/png'); 
+            return data;
+        }
+      
+        // WebSocket configuration parameters:
+        const WS_URL = 'ws://localhost:3001';
+        const FPS = 3;
+        const ws = new WebSocket(WS_URL);
+
+        // Listen to connection to WebSocket server:
+        ws.onopen = () => {
+            console.log(`Connected to ${WS_URL}`);
+
+            // When connected, sends the base64 string 
+            // to the server at some frequency:
+            setInterval(() => {
+                ws.send(getFrame());
+            }, 1000 / FPS);
+        }
+    </script>
+</body>
+</html>
